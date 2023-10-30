@@ -1,3 +1,4 @@
+# source: TuringLang/TuringExamples repository
 
 #Import Turing, Distributions, StatsBase, DataFrames and CSV
 using Turing, Distributions, StatsBase, DataFrames, CSV
@@ -14,16 +15,17 @@ Turing.turnprogress(false)
 
 # Load in the shampoo dataset (can be downloaded from https://raw.githubusercontent.com/jbrownlee/Datasets/master/shampoo.csv)
 println("Loading the dataset")
-df = CSV.read("../data/shampoo.csv")
+df = CSV.read("./data/shampoo.csv", DataFrame)
 s = df.Sales
-pyplot()
+# pyplot() # Choose the pyplot (matplotlib) backend (Or another backend)
 plot(s, reuse=false, title="Shampoo dataset")
 gui()
 
-println("Split into training and test sets. We will predict for the next 4 days using the data from the past 32 days")
+println("Split into training and test sets.")
 train_percentage = 0.9
 s_train = s[1:floor(Int, train_percentage * length(s))]
 N = length(s_train)
+println("We will predict for the next $(length(s)-N) obs using the data from the past $N obs.")
 
 println("Plot the training data")
 plot(s_train, reuse=false, title="Train Data")
@@ -53,7 +55,11 @@ end;
 # n_adapts::Int : The number of samples to use with adapatation.
 # δ::Float64 : Target acceptance rate.
 
-chain = sample(AR(s_train, N), NUTS(5000, 200, 0.65))
+# chain = sample(AR(s_train, N), NUTS(5000, 200, 0.65))
+model = AR(s_train, N)
+samples = 5_000
+sampler = NUTS(200, 0.65)
+chain = sample(model, sampler, samples)
 
 println("Chain has been sampled; Now let us visualise it!")
 plot(chain, reuse=false, title="Sampler Plot")
