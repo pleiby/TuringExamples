@@ -39,17 +39,19 @@ plot(s1, s2, layout=(2, 1), reuse=false)
 println("The PACF plot cuts off at k = 2, so we will have an AR(2) model for this dataset")
 
 #Defining the model
-σ = 1.0
 @model AR(x, N) = begin
+    σ = 1.0
     # prior
     α ~ Normal(0, σ)
     beta_1 ~ Uniform(-1, 1)
     beta_2 ~ Uniform(-1, 1)
     sigma ~ Exponential(1) # ??? Unused
     # likelihood
+    x[1] ~ Normal(α, sigma) # initial values assume lag values are zero
+    x[2] ~ Normal(α, sigma)
     for t in 3:N
         μ = α + beta_1 * x[t-1] + beta_2 * x[t-2]
-        x[t] ~ Normal(μ, 0.1)
+        x[t] ~ Normal(μ, sigma)
     end
 end;
 
@@ -64,6 +66,7 @@ samples = 5_000
 sampler = NUTS(200, 0.65)
 chain = sample(model, sampler, samples)
 
+# ??? XXX this model does not fit well at all!
 println("Chain has been sampled; Now let us visualise it!")
 plot(chain, reuse=false, title="Sampler Plot")
 # gui()
